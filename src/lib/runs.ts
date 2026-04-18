@@ -3,6 +3,8 @@ import path from "node:path";
 
 import { Persona } from "@/lib/personas";
 
+type OrchestrationMode = "sequential" | "parallel";
+
 export type RunStatus = "queued" | "running" | "completed" | "failed";
 export type PersonaRunStatus =
   | "queued"
@@ -17,7 +19,7 @@ export type RunManifest = {
   startedAt?: string;
   completedAt?: string;
   status: RunStatus;
-  orchestration: "sequential";
+  orchestration: OrchestrationMode;
   personas: string[];
   currentPersonaId?: string;
   error?: string;
@@ -49,6 +51,14 @@ export type PersonaRunRecord = {
 };
 
 const runsDir = path.join(process.cwd(), "data", "runs");
+const writeQueues =
+  globalThis.__honestProductTesterWriteQueues ?? new Map<string, Promise<unknown>>();
+
+globalThis.__honestProductTesterWriteQueues = writeQueues;
+
+declare global {
+  var __honestProductTesterWriteQueues: Map<string, Promise<unknown>> | undefined;
+}
 
 export async function createRun(url: string, personas: Persona[]) {
   const trimmedUrl = url.trim();
@@ -63,7 +73,7 @@ export async function createRun(url: string, personas: Persona[]) {
     url: parsedUrl.href,
     createdAt: new Date().toISOString(),
     status: "queued",
-    orchestration: "sequential",
+    orchestration: "parallel",
     personas: personas.map((persona) => persona.id),
   };
 
@@ -83,7 +93,7 @@ export async function createRun(url: string, personas: Persona[]) {
         reportPath,
         observations: [
           "Persona loaded from Markdown draft.",
-          "Sequential execution selected for MVP.",
+          "Parallel execution is enabled for this run.",
           "Live browser session has not started yet.",
         ],
         actions: [],
@@ -129,10 +139,12 @@ export async function updateRunManifest(
   runId: string,
   updater: (current: RunManifest) => RunManifest,
 ) {
-  const current = await readManifest(runId);
-  const next = updater(current);
-  await writeManifest(runId, next);
-  return next;
+  return queueWrite(getManifestQueueKey(runId), async () => {
+    const current = await readManifest(runId);
+    const next = updater(current);
+    await writeManifest(runId, next);
+    return next;
+  });
 }
 
 export async function updatePersonaRecord(
@@ -140,10 +152,12 @@ export async function updatePersonaRecord(
   personaId: string,
   updater: (current: PersonaRunRecord) => PersonaRunRecord,
 ) {
-  const current = await readPersonaRecord(runId, personaId);
-  const next = updater(current);
-  await writePersonaRecord(runId, personaId, next);
-  return next;
+  return queueWrite(getPersonaQueueKey(runId, personaId), async () => {
+    const current = await readPersonaRecord(runId, personaId);
+    const next = updater(current);
+    await writePersonaRecord(runId, personaId, next);
+    return next;
+  });
 }
 
 export async function appendPersonaObservation(
@@ -214,6 +228,29 @@ async function writePersonaRecord(
     ),
     "utf8",
   );
+}
+
+function getManifestQueueKey(runId: string) {
+  return `manifest:${runId}`;
+}
+
+function getPersonaQueueKey(runId: string, personaId: string) {
+  return `persona:${runId}:${personaId}`;
+}
+
+async function queueWrite<T>(key: string, task: () => Promise<T>) {
+  const previous = writeQueues.get(key) ?? Promise.resolve();
+  const next = previous.catch(() => undefined).then(task);
+
+  writeQueues.set(key, next);
+
+  try {
+    return await next;
+  } finally {
+    if (writeQueues.get(key) === next) {
+      writeQueues.delete(key);
+    }
+  }
 }
 
 function createRunId() {

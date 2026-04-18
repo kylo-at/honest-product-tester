@@ -7,7 +7,7 @@ Build a hackathon MVP that takes a public website URL and runs a sequence of bru
 ## Product Direction
 
 - Input: public website URL only
-- Execution: personas run one after the other
+- Execution: personas run in parallel
 - Browsing: live interaction through `agent-browser`
 - Orchestration: Pi SDK sessions drive reasoning and decide each next browser action
 - Personas: stored as editable Markdown files in `personas/`

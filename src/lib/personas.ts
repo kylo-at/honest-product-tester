@@ -74,7 +74,7 @@ export async function getPersonas(): Promise<Persona[]> {
     }),
   );
 
-  const orderIndex = new Map(
+  const orderIndex = new Map<string, number>(
     defaultPersonaOrder.map((id, index) => [id, index]),
   );
 

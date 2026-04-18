@@ -13,7 +13,7 @@ Hackathon project for OpenAI Codex Vienna: a persona-driven website tester that 
 ## MVP Behavior
 
 - user submits a public URL
-- personas run one after the other
+- personas run in parallel
 - each persona browses differently according to its own prompt
 - each persona gets its own final report
 - dashboard shows persona cards, progress, and evidence

@@ -22,6 +22,13 @@ export function RunDetails({ initialRun }: RunDetailsProps) {
   const [run, setRun] = useState(initialRun);
   const [now, setNow] = useState(() => Date.now());
   const terminalRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const runningCount = run.personaRuns.filter(
+    (personaRun) => personaRun.status === "running",
+  ).length;
+  const finishedCount = run.personaRuns.filter(
+    (personaRun) =>
+      personaRun.status === "completed" || personaRun.status === "failed",
+  ).length;
 
   useEffect(() => {
     if (run.manifest.status === "completed" || run.manifest.status === "failed") {
@@ -84,18 +91,12 @@ export function RunDetails({ initialRun }: RunDetailsProps) {
   }, [run.manifest.status]);
 
   const statusCopy = useMemo(() => {
-    if (run.manifest.status === "running" && run.manifest.currentPersonaId) {
-      const activePersona = run.personaRuns.find(
-        (personaRun) => personaRun.personaId === run.manifest.currentPersonaId,
-      );
-
-      if (activePersona) {
-        return `Running ${activePersona.personaName}`;
-      }
+    if (run.manifest.status === "running") {
+      return `Running ${runningCount} of ${run.personaRuns.length} personas`;
     }
 
     return run.manifest.status;
-  }, [run]);
+  }, [run.manifest.status, run.personaRuns.length, runningCount]);
 
   const showSummaries =
     run.manifest.status === "completed" || run.manifest.status === "failed";
@@ -108,14 +109,13 @@ export function RunDetails({ initialRun }: RunDetailsProps) {
     const runStartedAt = run.manifest.startedAt ?? run.manifest.createdAt;
     const startedAtMs = Date.parse(runStartedAt);
     const elapsedMs = Math.max(0, now - startedAtMs);
-    const totalBudgetMs = Math.max(
-      PERSONA_TEST_BUDGET_MS,
-      run.personaRuns.length * PERSONA_TEST_BUDGET_MS,
-    );
-    const rawProgress = (elapsedMs / totalBudgetMs) * 100;
+    const timeProgress = (elapsedMs / PERSONA_TEST_BUDGET_MS) * 100;
+    const completionProgress = (finishedCount / run.personaRuns.length) * 100;
+    const rawProgress = Math.max(timeProgress, completionProgress);
 
     return Math.max(8, Math.min(94, Math.round(rawProgress)));
   }, [
+    finishedCount,
     now,
     run.manifest.createdAt,
     run.manifest.startedAt,
@@ -156,10 +156,10 @@ export function RunDetails({ initialRun }: RunDetailsProps) {
         <p className={styles.kicker}>Codex Community Hackathon - Vienna</p>
         <h1>{`UX Testing (${run.manifest.url})`}</h1>
         <p className={styles.copy}>
-          Six personas test the same website with the same {budgetSeconds}
-          -second time budget. While the run is active, each panel shows that
-          persona&apos;s latest captured screen. When the run finishes, each panel
-          switches to the final markdown summary.
+          Six personas test the same website in parallel with the same{" "}
+          {budgetSeconds}-second time budget. While the run is active, each
+          panel shows that persona&apos;s latest captured screen. When the run
+          finishes, each panel switches to the final markdown summary.
         </p>
       </section>
 
@@ -230,7 +230,7 @@ export function RunDetails({ initialRun }: RunDetailsProps) {
                       <div className={styles.screenPlaceholder}>
                         <span className={styles.placeholderLabel}>
                           {personaRun.status === "queued"
-                            ? "Waiting for turn"
+                            ? "Booting persona"
                             : "No screenshot yet"}
                         </span>
                         <p>{personaRun.summary}</p>

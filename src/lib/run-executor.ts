@@ -52,6 +52,9 @@ export function ensureRunStarted(runId: string) {
 async function executeRun(runId: string) {
   const { manifest } = await getRun(runId);
   const personas = await getPersonas();
+  const runPersonas = manifest.personas
+    .map((personaId) => personas.find((item) => item.id === personaId))
+    .filter((persona): persona is Persona => Boolean(persona));
 
   await updateRunManifest(runId, (current) => ({
     ...current,
@@ -60,43 +63,39 @@ async function executeRun(runId: string) {
   }));
 
   try {
-    for (const personaId of manifest.personas) {
-      const persona = personas.find((item) => item.id === personaId);
-
-      if (!persona) {
-        continue;
-      }
-
-      await updateRunManifest(runId, (current) => ({
-        ...current,
-        currentPersonaId: persona.id,
-      }));
-
-      await runPersona(runId, manifest.url, persona);
-    }
+    const results = await Promise.allSettled(
+      runPersonas.map((persona) => runPersona(runId, manifest.url, persona)),
+    );
+    const failures = results.filter(
+      (result): result is PromiseRejectedResult => result.status === "rejected",
+    );
 
     await updateRunManifest(runId, (current) => ({
       ...current,
-      status: "completed",
+      status: failures.length > 0 ? "failed" : "completed",
       completedAt: new Date().toISOString(),
       currentPersonaId: undefined,
-    }));
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown run failure";
-
-    await updateRunManifest(runId, (current) => ({
-      ...current,
-      status: "failed",
-      completedAt: new Date().toISOString(),
-      currentPersonaId: undefined,
-      error: message,
+      error:
+        failures.length > 0
+          ? failures
+              .map((failure) =>
+                failure.reason instanceof Error
+                  ? failure.reason.message
+                  : "Unknown persona failure",
+              )
+              .join("\n")
+          : undefined,
     }));
   } finally {
-    await closeAllBrowsers().catch(() => undefined);
+    await Promise.allSettled(
+      runPersonas.map((persona) => closeBrowserSession(runId, persona.id)),
+    );
   }
 }
 
 async function runPersona(runId: string, url: string, persona: Persona) {
+  const browserSession = getBrowserSessionName(runId, persona.id);
+
   await updatePersonaRecord(runId, persona.id, (current) => ({
     ...current,
     status: "running",
@@ -109,6 +108,7 @@ async function runPersona(runId: string, url: string, persona: Persona) {
   let reportMarkdown = "";
 
   const tools = createBrowserTools({
+    browserSession,
     persona,
     runId,
     screenshotDir,
@@ -181,7 +181,7 @@ async function runPersona(runId: string, url: string, persona: Persona) {
   } finally {
     unsubscribe();
     session.dispose();
-    await closeAllBrowsers().catch(() => undefined);
+    await closeBrowserSession(runId, persona.id).catch(() => undefined);
   }
 }
 
@@ -208,10 +208,12 @@ async function handleSessionEvent(
 }
 
 function createBrowserTools({
+  browserSession,
   persona,
   runId,
   screenshotDir,
 }: {
+  browserSession: string;
   persona: Persona;
   runId: string;
   screenshotDir: string;
@@ -220,9 +222,13 @@ function createBrowserTools({
     const input = args.join(" ");
 
     try {
-      const result = await execFileAsync(AGENT_BROWSER_BIN, args, {
-        maxBuffer: 1024 * 1024 * 8,
-      });
+      const result = await execFileAsync(
+        AGENT_BROWSER_BIN,
+        ["--session", browserSession, ...args],
+        {
+          maxBuffer: 1024 * 1024 * 8,
+        },
+      );
       const stdout = [result.stdout, result.stderr].filter(Boolean).join("\n").trim();
 
       await appendPersonaAction(runId, persona.id, {
@@ -464,8 +470,16 @@ The execution path completed, but report generation needs another pass.
 `;
 }
 
-async function closeAllBrowsers() {
-  await execFileAsync(AGENT_BROWSER_BIN, ["close", "--all"], {
-    maxBuffer: 1024 * 1024,
-  });
+function getBrowserSessionName(runId: string, personaId: string) {
+  return `${runId}-${personaId}`;
+}
+
+async function closeBrowserSession(runId: string, personaId: string) {
+  await execFileAsync(
+    AGENT_BROWSER_BIN,
+    ["--session", getBrowserSessionName(runId, personaId), "close"],
+    {
+      maxBuffer: 1024 * 1024,
+    },
+  );
 }
