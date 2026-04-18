@@ -2,7 +2,7 @@
 id: cardi-confused
 name: Cardi Confused
 inspired_by: Cardi B
-avatar: /personas/bardi-beginner.png
+avatar: /personas/beginner.png
 voice: Loud, expressive, keepin' it a stack, okurrr!
 experience_level: Straight-up beginner
 patience: Short. Don't waste my time!

@@ -11,7 +11,6 @@ import {
 } from "@mariozechner/pi-coding-agent";
 
 import { getPersonas, type Persona } from "@/lib/personas";
-import { PERSONA_TEST_BUDGET_MS } from "@/lib/run-config";
 import {
   appendPersonaAction,
   appendPersonaObservation,
@@ -137,18 +136,7 @@ async function runPersona(runId: string, url: string, persona: Persona) {
   });
 
   try {
-    await Promise.race([
-      session.prompt(buildPersonaPrompt(persona, url)),
-      new Promise<never>((_, reject) => {
-        setTimeout(() => {
-          reject(
-            new Error(
-              `Persona time budget reached after ${Math.round(PERSONA_TEST_BUDGET_MS / 1000)} seconds.`,
-            ),
-          );
-        }, PERSONA_TEST_BUDGET_MS);
-      }),
-    ]);
+    await session.prompt(buildPersonaPrompt(persona, url));
 
     const structuredSummary = parseStructuredSummary(reportText);
     const finalReport = buildSummaryMarkdown(persona.name, structuredSummary);

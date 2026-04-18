@@ -68,15 +68,16 @@ export async function getPersonas(): Promise<Persona[]> {
       const raw = await fs.readFile(fullPath, "utf8");
       const { data, content } = matter(raw);
       const frontmatter = data as PersonaFrontmatter;
+      const fallbackId = path.basename(file, ".md");
 
       return {
-        id: frontmatter.id,
-        name: frontmatter.name,
-        inspiredBy: frontmatter.inspired_by,
-        avatar: frontmatter.avatar,
-        voice: frontmatter.voice,
-        experienceLevel: frontmatter.experience_level,
-        patience: frontmatter.patience,
+        id: frontmatter.id?.trim() || fallbackId,
+        name: frontmatter.name?.trim() || fallbackId,
+        inspiredBy: frontmatter.inspired_by?.trim() || "Unknown",
+        avatar: frontmatter.avatar?.trim() || "/personas/beginner.png",
+        voice: frontmatter.voice?.trim() || "Direct",
+        experienceLevel: frontmatter.experience_level?.trim() || "Unknown",
+        patience: frontmatter.patience?.trim() || "Unknown",
         goals: frontmatter.goals ?? [],
         interests: frontmatter.interests ?? [],
         dislikes: frontmatter.dislikes ?? [],

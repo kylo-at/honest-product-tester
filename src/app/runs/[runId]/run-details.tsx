@@ -34,7 +34,6 @@ const statusIcons = {
 
 export function RunDetails({ initialRun }: RunDetailsProps) {
   const [run, setRun] = useState(initialRun);
-  const [now, setNow] = useState(() => Date.now());
   const terminalRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const runningCount = run.personaRuns.filter(
     (personaRun) => personaRun.status === "running",
@@ -90,20 +89,6 @@ export function RunDetails({ initialRun }: RunDetailsProps) {
     }
   }, [run]);
 
-  useEffect(() => {
-    if (run.manifest.status !== "running") {
-      return;
-    }
-
-    const interval = window.setInterval(() => {
-      setNow(Date.now());
-    }, 1000);
-
-    return () => {
-      window.clearInterval(interval);
-    };
-  }, [run.manifest.status]);
-
   const statusCopy = useMemo(() => {
     if (run.manifest.status === "running") {
       return `Running ${runningCount} of ${run.personaRuns.length} personas`;
@@ -119,19 +104,11 @@ export function RunDetails({ initialRun }: RunDetailsProps) {
       return run.manifest.status === "completed" ? 100 : 0;
     }
 
-    const runStartedAt = run.manifest.startedAt ?? run.manifest.createdAt;
-    const startedAtMs = Date.parse(runStartedAt);
-    const elapsedMs = Math.max(0, now - startedAtMs);
-    const timeProgress = (elapsedMs / PERSONA_TEST_BUDGET_MS) * 100;
     const completionProgress = (finishedCount / run.personaRuns.length) * 100;
-    const rawProgress = Math.max(timeProgress, completionProgress);
 
-    return Math.max(8, Math.min(94, Math.round(rawProgress)));
+    return Math.max(8, Math.min(94, Math.round(completionProgress)));
   }, [
     finishedCount,
-    now,
-    run.manifest.createdAt,
-    run.manifest.startedAt,
     run.manifest.status,
     run.personaRuns.length,
   ]);
