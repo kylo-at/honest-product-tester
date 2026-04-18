@@ -126,143 +126,125 @@ export function RunDetails({ initialRun }: RunDetailsProps) {
   return (
     <>
       <div className={styles.topBar}>
-        <Link href="/" className={styles.backLink}>
-          Back to dashboard
-        </Link>
-        {run.manifest.status === "running" ? (
-          <div
-            className={styles.progressStatus}
-            aria-label={`Run progress ${fakeProgress}%`}
-            role="progressbar"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={fakeProgress}
-          >
-            <span className={styles.progressLabel}>Progress</span>
-            <div className={styles.progressTrack}>
-              <div
-                className={styles.progressFill}
-                style={{ width: `${fakeProgress}%` }}
-              />
-            </div>
-            <span className={styles.progressValue}>{fakeProgress}%</span>
+        <div className={styles.topBarLeft}>
+          <Link href="/" className={styles.backLink}>
+            Back
+          </Link>
+          <div className={styles.runMeta}>
+            <span className={styles.runUrl}>{`UX Testing ${run.manifest.url}`}</span>
+            <span className={styles.runFacts}>
+              {budgetSeconds}s per persona • {formatTimestamp(run.manifest.createdAt)}
+            </span>
           </div>
-        ) : (
-          <span className={styles.status}>{statusCopy}</span>
-        )}
+        </div>
+        <div className={styles.topBarRight}>
+          {run.manifest.status === "running" ? (
+            <div
+              className={styles.progressStatus}
+              aria-label={`Run progress ${fakeProgress}%`}
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={fakeProgress}
+            >
+              <span className={styles.progressLabel}>Progress</span>
+              <div className={styles.progressTrack}>
+                <div
+                  className={styles.progressFill}
+                  style={{ width: `${fakeProgress}%` }}
+                />
+              </div>
+              <span className={styles.progressValue}>{fakeProgress}%</span>
+            </div>
+          ) : (
+            <span className={styles.status}>{statusCopy}</span>
+          )}
+        </div>
       </div>
 
-      <section className={styles.hero}>
-        <p className={styles.kicker}>Codex Community Hackathon - Vienna</p>
-        <h1>{`UX Testing (${run.manifest.url})`}</h1>
-        <p className={styles.copy}>
-          Six personas test the same website in parallel with the same{" "}
-          {budgetSeconds}-second time budget. While the run is active, each
-          panel shows that persona&apos;s latest captured screen. When the run
-          finishes, each panel switches to the final markdown summary.
-        </p>
-      </section>
-
-      <section className={styles.metaGrid}>
-        <article className={styles.metaCard}>
-          <span>Website</span>
-          <strong>{run.manifest.url}</strong>
-        </article>
-        <article className={styles.metaCard}>
-          <span>Per Persona</span>
-          <strong>{budgetSeconds} seconds max</strong>
-        </article>
-        <article className={styles.metaCard}>
-          <span>Started</span>
-          <strong>{formatTimestamp(run.manifest.createdAt)}</strong>
-        </article>
-      </section>
-
       <section className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <h2>Live Tester Panels</h2>
-          <p>
-            {showSummaries
-              ? "Testing finished. Each panel now shows the persona's final markdown findings."
-              : "The page refreshes every two seconds while screenshots and actions stream in."}
-          </p>
-        </div>
         <div className={styles.personaGrid}>
           {run.personaRuns.map((personaRun) => (
             <article key={personaRun.personaId} className={styles.personaCard}>
-              <div className={styles.panelHeader}>
-                <div className={styles.avatarWrap}>
-                  <Image
-                    src={personaRun.personaAvatar}
-                    alt={personaRun.personaName}
-                    width={52}
-                    height={52}
-                    className={styles.avatar}
-                  />
+              <div className={styles.panelScroll}>
+                <div className={styles.panelHeader}>
+                  <div className={styles.avatarWrap}>
+                    <Image
+                      src={personaRun.personaAvatar}
+                      alt={personaRun.personaName}
+                      width={52}
+                      height={52}
+                      className={styles.avatar}
+                    />
+                  </div>
+                  <div className={styles.panelMeta}>
+                    <h3>{personaRun.personaName}</h3>
+                    <span className={styles.queueBadge}>{personaRun.status}</span>
+                  </div>
                 </div>
-                <div className={styles.panelMeta}>
-                  <h3>{personaRun.personaName}</h3>
-                  <span className={styles.queueBadge}>{personaRun.status}</span>
+                <div className={styles.panelBody}>
+                  {showSummaries ? (
+                    <div className={styles.reportBlock}>
+                      <RenderedMarkdown
+                        markdown={
+                          personaRun.finalReport ??
+                          `# ${personaRun.personaName}\n\nNo final report was captured.`
+                        }
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      <div className={styles.screenFrame}>
+                        {personaRun.latestScreenshotFileName ? (
+                          <Image
+                            src={`/api/runs/${run.manifest.id}/screenshots/${personaRun.latestScreenshotFileName}?v=${personaRun.latestScreenshotTakenAt ?? personaRun.updatedAt ?? ""}`}
+                            alt={`${personaRun.personaName} live browser screenshot`}
+                            fill
+                            sizes="(max-width: 680px) 100vw, (max-width: 900px) 50vw, 33vw"
+                            className={styles.screenImage}
+                            unoptimized
+                          />
+                        ) : (
+                          <div className={styles.screenPlaceholder}>
+                            <span className={styles.placeholderLabel}>
+                              {personaRun.status === "queued"
+                                ? "Booting persona"
+                                : "No screenshot yet"}
+                            </span>
+                            <p>{personaRun.summary}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className={styles.subsection}>
+                        <h4>Live terminal</h4>
+                        <div
+                          ref={(node) => {
+                            terminalRefs.current[personaRun.personaId] = node;
+                          }}
+                          className={styles.terminal}
+                        >
+                          {buildTerminalLines(personaRun).map((line, index) => (
+                            <div
+                              key={`${personaRun.personaId}-terminal-${index}-${line.label}`}
+                              className={styles.terminalLine}
+                              data-tone={line.tone}
+                            >
+                              <span className={styles.terminalTime}>{line.time}</span>
+                              <span className={styles.terminalPrompt}>{line.prompt}</span>
+                              <span className={styles.terminalText}>{line.label}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {personaRun.error ? (
+                    <div className={styles.errorBox}>{personaRun.error}</div>
+                  ) : null}
                 </div>
               </div>
-              {showSummaries ? (
-                <div className={styles.reportBlock}>
-                  <RenderedMarkdown
-                    markdown={
-                      personaRun.finalReport ??
-                      `# ${personaRun.personaName}\n\nNo final report was captured.`
-                    }
-                  />
-                </div>
-              ) : (
-                <>
-                  <div className={styles.screenFrame}>
-                    {personaRun.latestScreenshotFileName ? (
-                      <Image
-                        src={`/api/runs/${run.manifest.id}/screenshots/${personaRun.latestScreenshotFileName}?v=${personaRun.latestScreenshotTakenAt ?? personaRun.updatedAt ?? ""}`}
-                        alt={`${personaRun.personaName} live browser screenshot`}
-                        fill
-                        sizes="(max-width: 680px) 100vw, (max-width: 900px) 50vw, 33vw"
-                        className={styles.screenImage}
-                        unoptimized
-                      />
-                    ) : (
-                      <div className={styles.screenPlaceholder}>
-                        <span className={styles.placeholderLabel}>
-                          {personaRun.status === "queued"
-                            ? "Booting persona"
-                            : "No screenshot yet"}
-                        </span>
-                        <p>{personaRun.summary}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className={styles.subsection}>
-                    <h4>Live terminal</h4>
-                    <div
-                      ref={(node) => {
-                        terminalRefs.current[personaRun.personaId] = node;
-                      }}
-                      className={styles.terminal}
-                    >
-                      {buildTerminalLines(personaRun).map((line, index) => (
-                        <div
-                          key={`${personaRun.personaId}-terminal-${index}-${line.label}`}
-                          className={styles.terminalLine}
-                          data-tone={line.tone}
-                        >
-                          <span className={styles.terminalTime}>{line.time}</span>
-                          <span className={styles.terminalPrompt}>{line.prompt}</span>
-                          <span className={styles.terminalText}>{line.label}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {personaRun.error ? <div className={styles.errorBox}>{personaRun.error}</div> : null}
             </article>
           ))}
         </div>

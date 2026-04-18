@@ -12,6 +12,10 @@ export const defaultPersonaOrder = [
   "multitasking-millie",
 ] as const;
 
+const defaultPersonaOrderIndex = new Map<string, number>(
+  defaultPersonaOrder.map((id, index) => [id, index]),
+);
+
 export type Persona = {
   id: string;
   name: string;
@@ -45,6 +49,15 @@ type PersonaFrontmatter = {
 
 const personasDir = path.join(process.cwd(), "personas");
 
+export function comparePersonaIds(leftId: string, rightId: string) {
+  const leftIndex =
+    defaultPersonaOrderIndex.get(leftId) ?? Number.MAX_SAFE_INTEGER;
+  const rightIndex =
+    defaultPersonaOrderIndex.get(rightId) ?? Number.MAX_SAFE_INTEGER;
+
+  return leftIndex - rightIndex;
+}
+
 export async function getPersonas(): Promise<Persona[]> {
   const files = await fs.readdir(personasDir);
   const markdownFiles = files.filter((file) => file.endsWith(".md")).sort();
@@ -74,16 +87,11 @@ export async function getPersonas(): Promise<Persona[]> {
     }),
   );
 
-  const orderIndex = new Map<string, number>(
-    defaultPersonaOrder.map((id, index) => [id, index]),
-  );
-
   return personas.sort((left, right) => {
-    const leftIndex = orderIndex.get(left.id) ?? Number.MAX_SAFE_INTEGER;
-    const rightIndex = orderIndex.get(right.id) ?? Number.MAX_SAFE_INTEGER;
+    const indexDelta = comparePersonaIds(left.id, right.id);
 
-    if (leftIndex !== rightIndex) {
-      return leftIndex - rightIndex;
+    if (indexDelta !== 0) {
+      return indexDelta;
     }
 
     return left.name.localeCompare(right.name);

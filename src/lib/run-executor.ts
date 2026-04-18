@@ -416,8 +416,6 @@ function createBrowserTools({
 }
 
 function buildPersonaPrompt(persona: Persona, url: string) {
-  const sections = persona.reportSections.map((section) => `## ${section}`).join("\n\n");
-
   return `
 ${persona.prompt}
 
@@ -438,35 +436,27 @@ When you are done, return only Markdown in this exact structure:
 
 # ${persona.name}
 
-${sections}
+- one bullet with the strongest first impression
+- one bullet with the biggest friction or confusion, if any
+- one bullet with the clearest thing that worked well
+- one bullet with the most important improvement advice
+- optional fifth bullet only if there is another high-value finding
 
-Be concrete. Mention what you clicked, what happened, and what this persona wanted but did not get.
+Rules for the bullets:
+- Write 4 bullets by default, 5 only if truly useful.
+- Keep each bullet to 1 or 2 short sentences.
+- Be concrete about what you clicked, what happened, and what this persona wanted but did not get.
+- Include real advice on what should change, not just criticism.
+- Skip filler, repetition, and generic praise.
 `.trim();
 }
 
 function fallbackReport(personaName: string) {
   return `# ${personaName}
 
-## what I noticed first
-No report text was captured.
-
-## what I tried to do
-The run completed without a usable final markdown response.
-
-## what helped
-Unknown.
-
-## what annoyed me
-Unknown.
-
-## what I needed but could not find
-Unknown.
-
-## would I keep using this
-Unclear.
-
-## final verdict
-The execution path completed, but report generation needs another pass.
+- First impression could not be captured because no usable report text was returned.
+- The run finished, but the persona summary was missing.
+- Main improvement: ensure the persona returns the required short bullet summary format.
 `;
 }
 

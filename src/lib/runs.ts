@@ -1,7 +1,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
-import { Persona } from "@/lib/personas";
+import { comparePersonaIds, Persona } from "@/lib/personas";
 
 type OrchestrationMode = "sequential" | "parallel";
 
@@ -128,6 +128,16 @@ export async function getRun(runId: string) {
       return JSON.parse(await fs.readFile(fullPath, "utf8")) as PersonaRunRecord;
     }),
   );
+
+  personaRuns.sort((left, right) => {
+    const indexDelta = comparePersonaIds(left.personaId, right.personaId);
+
+    if (indexDelta !== 0) {
+      return indexDelta;
+    }
+
+    return left.personaName.localeCompare(right.personaName);
+  });
 
   return {
     manifest,
