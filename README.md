@@ -2,7 +2,7 @@
 
 [![Product demo](./demo-preview.gif)](./demo.mp4)
 
-> **Catch your AI slop before your customers do.** **Real Feedback** deploys six opinionated, autonomous AI personas to live-test your website. Instead of static analysis, we use real browser automation to turn first impressions into actionable heatmaps and critiques.
+> **Catch your AI slop before your customers do.** **Real Feedback** deploys six opinionated, autonomous AI personas to live-test your website. Instead of static analysis, we use real browser automation to turn first impressions into actionable feedback and critiques.
 
 ## ✨ The "Aha!" Moment
 * **Parallel Agent Execution:** This isn't a mock. We spin up **six concurrent Pi sessions** that browse your site in parallel, each with their own browser instance and unique worldview.
