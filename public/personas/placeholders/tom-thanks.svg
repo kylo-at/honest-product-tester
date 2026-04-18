@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Tom Thanks placeholder avatar">
+  <rect width="240" height="240" rx="36" fill="#173126"/>
+  <circle cx="120" cy="92" r="42" fill="#f3dbc9"/>
+  <path d="M58 191c13-34 40-51 62-51s49 17 62 51" fill="#4d8a67"/>
+  <path d="M88 88c8-8 19-12 32-12 13 0 24 4 32 12" fill="none" stroke="#173126" stroke-width="8" stroke-linecap="round"/>
+  <path d="M96 116c10 10 38 10 48 0" fill="none" stroke="#173126" stroke-width="8" stroke-linecap="round"/>
+  <path d="M90 68c9-11 19-16 30-16 12 0 22 5 31 16" fill="none" stroke="#9fd0af" stroke-width="8" stroke-linecap="round"/>
+</svg>

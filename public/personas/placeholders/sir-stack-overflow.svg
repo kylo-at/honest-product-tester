@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Sir Stack-Overflow placeholder avatar">
+  <rect width="240" height="240" rx="36" fill="#15202b"/>
+  <circle cx="120" cy="92" r="42" fill="#d9e3ea"/>
+  <path d="M58 191c13-34 40-51 62-51s49 17 62 51" fill="#40596d"/>
+  <rect x="84" y="80" width="72" height="30" rx="15" fill="none" stroke="#15202b" stroke-width="8"/>
+  <path d="M94 70c10-12 21-18 26-18 6 0 17 6 26 18" fill="none" stroke="#6e8da8" stroke-width="8" stroke-linecap="round"/>
+  <path d="M98 122h44" stroke="#15202b" stroke-width="8" stroke-linecap="round"/>
+</svg>

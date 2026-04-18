@@ -15,16 +15,16 @@
 .main {
   width: min(100%, 1100px);
   margin: 0 auto;
-  padding: 72px 24px 96px;
+  padding: 80px 24px 96px;
 }
 
 .hero {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 18px;
-  max-width: 760px;
-  margin-bottom: 40px;
+  gap: 20px;
+  max-width: 880px;
+  margin-bottom: 44px;
 }
 
 .eyebrow {
@@ -36,21 +36,20 @@
 }
 
 .title {
-  font-size: clamp(3.25rem, 8vw, 6.75rem);
-  line-height: 0.92;
+  font-size: clamp(2.9rem, 7vw, 5.6rem);
+  line-height: 0.9;
   letter-spacing: -0.08em;
   text-transform: uppercase;
-  max-width: 9ch;
+  max-width: 8ch;
 }
 
 .lead {
-  max-width: 56ch;
-  font-size: 1.05rem;
-  line-height: 1.7;
+  max-width: 46ch;
+  font-size: 1rem;
+  line-height: 1.65;
   color: #3d3d3d;
 }
 
-.heroButton,
 .submitButton {
   display: inline-flex;
   align-items: center;
@@ -71,8 +70,6 @@
   cursor: pointer;
 }
 
-.heroButton:hover,
-.heroButton:focus-visible,
 .submitButton:hover,
 .submitButton:focus-visible {
   transform: translate(-2px, -2px);
@@ -136,6 +133,11 @@
   .hero {
     gap: 16px;
     margin-bottom: 28px;
+  }
+
+  .title {
+    font-size: clamp(2.8rem, 16vw, 4.5rem);
+    max-width: 7ch;
   }
 
   .inputRow {

@@ -79,8 +79,8 @@ export function RunDetails({ initialRun }: RunDetailsProps) {
       </div>
 
       <section className={styles.hero}>
-        <p className={styles.kicker}>Run Initialized</p>
-        <h1>{run.manifest.id}</h1>
+        <p className={styles.kicker}>Codex Community Hackathon - Vienna</p>
+        <h1>Run Overview</h1>
         <p className={styles.url}>{run.manifest.url}</p>
         <p className={styles.copy}>
           This page polls the local run record every two seconds. Pi uses the

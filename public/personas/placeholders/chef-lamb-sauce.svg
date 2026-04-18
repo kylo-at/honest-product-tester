@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Chef Lamb Sauce placeholder avatar">
+  <rect width="240" height="240" rx="36" fill="#2c1a13"/>
+  <circle cx="120" cy="94" r="40" fill="#f5d6c6"/>
+  <path d="M58 191c13-34 40-51 62-51s49 17 62 51" fill="#8a3b20"/>
+  <path d="M85 82c10-15 24-23 35-23s25 8 35 23" fill="none" stroke="#f0f0ea" stroke-width="14" stroke-linecap="round"/>
+  <path d="M92 115c7 7 49 7 56 0" fill="none" stroke="#2c1a13" stroke-width="8" stroke-linecap="round"/>
+  <path d="M92 76h16M132 76h16" stroke="#2c1a13" stroke-width="8" stroke-linecap="round"/>
+</svg>

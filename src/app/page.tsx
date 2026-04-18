@@ -6,15 +6,12 @@ export default function Home() {
     <div className={styles.page}>
       <main className={styles.main}>
         <section className={styles.hero}>
-          <p className={styles.eyebrow}>Honest Product Tester</p>
-          <h1 className={styles.title}>See what your product feels like on first contact.</h1>
+          <p className={styles.eyebrow}>Codex Community Hackathon - Vienna</p>
+          <h1 className={styles.title}>Honest Product Tester</h1>
           <p className={styles.lead}>
             Run a fast UX test against any public website. We launch personas,
             capture friction, and turn the first impression into usable feedback.
           </p>
-          <a className={styles.heroButton} href="#ux-test-form">
-            UX Test
-          </a>
         </section>
 
         <section id="ux-test-form" className={styles.formSection}>
@@ -32,7 +29,7 @@ export default function Home() {
                 required
               />
               <button className={styles.submitButton} type="submit">
-                Send
+                UX Test
               </button>
             </div>
           </form>

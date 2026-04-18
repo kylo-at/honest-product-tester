@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Cardi Confused placeholder avatar">
+  <rect width="240" height="240" rx="36" fill="#311847"/>
+  <circle cx="120" cy="92" r="42" fill="#ffd7c9"/>
+  <path d="M58 191c13-34 40-51 62-51s49 17 62 51" fill="#8a3f74"/>
+  <path d="M92 90c10-10 46-10 56 0" fill="none" stroke="#311847" stroke-width="8" stroke-linecap="round"/>
+  <path d="M84 65c9-13 20-19 36-19 16 0 27 6 36 19" fill="none" stroke="#ff8fcf" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="98" cy="106" r="4" fill="#311847"/>
+  <circle cx="142" cy="106" r="4" fill="#311847"/>
+</svg>
