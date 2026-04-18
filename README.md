@@ -1,6 +1,6 @@
 # Real Feedback From Fake People
 
-<video src="./demo.mp4" controls muted playsinline width="100%"></video>
+[![Product demo](./demo-preview.gif)](./demo.mp4)
 
 > **Catch your AI slop before your customers do.** **Real Feedback** deploys six opinionated, autonomous AI personas to live-test your website. Instead of static analysis, we use real browser automation to turn first impressions into actionable heatmaps and critiques.
 
