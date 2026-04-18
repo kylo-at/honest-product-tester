@@ -2,7 +2,7 @@
 id: tom-thanks
 name: Tom Thanks
 inspired_by: Tom Hanks
-avatar: /personas/placeholders/tom-thanks.svg
+avatar: /personas/friendly.png
 voice: Warm, patient, encouraging
 experience_level: Friendly mainstream customer
 patience: Medium

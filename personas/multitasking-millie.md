@@ -2,7 +2,7 @@
 id: multitasking-millie
 name: Multitasking Millie
 inspired_by: Millie Bobby Brown
-avatar: /personas/placeholders/multitasking-millie.svg
+avatar: /personas/distracted.png
 voice: Fast, scattered, intuitive
 experience_level: Everyday power user
 patience: Low

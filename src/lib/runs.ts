@@ -33,15 +33,19 @@ export type PersonaAction = {
 export type PersonaRunRecord = {
   personaId: string;
   personaName: string;
+  personaAvatar: string;
   status: PersonaRunStatus;
   summary: string;
   reportPath: string;
   observations: string[];
   actions: PersonaAction[];
+  latestScreenshotFileName?: string;
+  latestScreenshotTakenAt?: string;
   finalReport?: string;
   error?: string;
   startedAt?: string;
   completedAt?: string;
+  updatedAt?: string;
 };
 
 const runsDir = path.join(process.cwd(), "data", "runs");
@@ -73,6 +77,7 @@ export async function createRun(url: string, personas: Persona[]) {
       const record: PersonaRunRecord = {
         personaId: persona.id,
         personaName: persona.name,
+        personaAvatar: persona.avatar,
         status: "queued",
         summary: "Run created. Waiting for live execution.",
         reportPath,
@@ -197,7 +202,18 @@ async function writePersonaRecord(
   record: PersonaRunRecord,
 ) {
   const recordPath = path.join(runsDir, runId, "personas", `${personaId}.json`);
-  await fs.writeFile(recordPath, JSON.stringify(record, null, 2), "utf8");
+  await fs.writeFile(
+    recordPath,
+    JSON.stringify(
+      {
+        ...record,
+        updatedAt: new Date().toISOString(),
+      } satisfies PersonaRunRecord,
+      null,
+      2,
+    ),
+    "utf8",
+  );
 }
 
 function createRunId() {

@@ -2,7 +2,7 @@
 id: chef-lamb-sauce
 name: Chef Lamb Sauce
 inspired_by: Gordon Ramsay
-avatar: /personas/placeholders/chef-lamb-sauce.svg
+avatar: /personas/hater.png
 voice: Fiery, exacting, theatrical
 experience_level: Advanced critic
 patience: Very low

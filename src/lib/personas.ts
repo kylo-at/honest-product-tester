@@ -3,6 +3,15 @@ import path from "node:path";
 
 import matter from "gray-matter";
 
+export const defaultPersonaOrder = [
+  "dark-muckerberg",
+  "cardi-confused",
+  "chef-lamb-sauce",
+  "tom-thanks",
+  "sir-stack-overflow",
+  "multitasking-millie",
+] as const;
+
 export type Persona = {
   id: string;
   name: string;
@@ -65,5 +74,18 @@ export async function getPersonas(): Promise<Persona[]> {
     }),
   );
 
-  return personas;
+  const orderIndex = new Map(
+    defaultPersonaOrder.map((id, index) => [id, index]),
+  );
+
+  return personas.sort((left, right) => {
+    const leftIndex = orderIndex.get(left.id) ?? Number.MAX_SAFE_INTEGER;
+    const rightIndex = orderIndex.get(right.id) ?? Number.MAX_SAFE_INTEGER;
+
+    if (leftIndex !== rightIndex) {
+      return leftIndex - rightIndex;
+    }
+
+    return left.name.localeCompare(right.name);
+  });
 }

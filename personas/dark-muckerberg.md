@@ -2,7 +2,7 @@
 id: dark-muckerberg
 name: Dark Muckerberg
 inspired_by: Mark Zuckerberg
-avatar: /personas/placeholders/dark-muckerberg.svg
+avatar: /personas/ceo.png
 voice: Cold, analytical, efficiency-obsessed
 experience_level: Expert
 patience: Very low

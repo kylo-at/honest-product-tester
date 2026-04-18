@@ -11,6 +11,7 @@ import {
 } from "@mariozechner/pi-coding-agent";
 
 import { getPersonas, type Persona } from "@/lib/personas";
+import { PERSONA_TEST_BUDGET_MS } from "@/lib/run-config";
 import {
   appendPersonaAction,
   appendPersonaObservation,
@@ -132,7 +133,18 @@ async function runPersona(runId: string, url: string, persona: Persona) {
   });
 
   try {
-    await session.prompt(buildPersonaPrompt(persona, url));
+    await Promise.race([
+      session.prompt(buildPersonaPrompt(persona, url)),
+      new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(
+            new Error(
+              `Persona time budget reached after ${Math.round(PERSONA_TEST_BUDGET_MS / 1000)} seconds.`,
+            ),
+          );
+        }, PERSONA_TEST_BUDGET_MS);
+      }),
+    ]);
 
     const finalReport = reportMarkdown.trim() || fallbackReport(persona.name);
 
@@ -359,6 +371,14 @@ function createBrowserTools({
           "screenshot",
           screenshotPath,
         ]);
+        const screenshotTakenAt = new Date().toISOString();
+
+        await updatePersonaRecord(runId, persona.id, (current) => ({
+          ...current,
+          latestScreenshotFileName: fileName,
+          latestScreenshotTakenAt: screenshotTakenAt,
+          summary: `Captured screenshot: ${params.label}`,
+        }));
 
         return {
           content: [{ type: "text", text: `${output}\nSaved to ${screenshotPath}` }],
@@ -402,6 +422,7 @@ Use the browser tools to inspect the product in the way this persona naturally w
 Constraints:
 - You may use only the browser tools.
 - Keep the run concise. Aim for 6 to 10 browser actions total.
+- You have the same fixed time budget as every other persona.
 - No destructive actions, purchases, or final form submissions.
 - Use browser_snapshot whenever you need to decide what to click next.
 - Use browser_screenshot when something is notably good, bad, or confusing.

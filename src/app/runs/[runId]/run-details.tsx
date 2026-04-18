@@ -1,8 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
+import { PERSONA_TEST_BUDGET_MS } from "@/lib/run-config";
 import type { PersonaRunRecord, RunManifest } from "@/lib/runs";
 import { formatTimestamp } from "@/lib/time";
 import styles from "./page.module.css";
@@ -18,6 +20,8 @@ type RunDetailsProps = {
 
 export function RunDetails({ initialRun }: RunDetailsProps) {
   const [run, setRun] = useState(initialRun);
+  const [now, setNow] = useState(() => Date.now());
+  const terminalRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
     if (run.manifest.status === "completed" || run.manifest.status === "failed") {
@@ -55,6 +59,30 @@ export function RunDetails({ initialRun }: RunDetailsProps) {
     };
   }, [run.manifest.id, run.manifest.status]);
 
+  useEffect(() => {
+    for (const personaRun of run.personaRuns) {
+      const terminal = terminalRefs.current[personaRun.personaId];
+
+      if (terminal) {
+        terminal.scrollTop = terminal.scrollHeight;
+      }
+    }
+  }, [run]);
+
+  useEffect(() => {
+    if (run.manifest.status !== "running") {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [run.manifest.status]);
+
   const statusCopy = useMemo(() => {
     if (run.manifest.status === "running" && run.manifest.currentPersonaId) {
       const activePersona = run.personaRuns.find(
@@ -69,98 +97,315 @@ export function RunDetails({ initialRun }: RunDetailsProps) {
     return run.manifest.status;
   }, [run]);
 
+  const showSummaries =
+    run.manifest.status === "completed" || run.manifest.status === "failed";
+  const budgetSeconds = Math.round(PERSONA_TEST_BUDGET_MS / 1000);
+  const fakeProgress = useMemo(() => {
+    if (run.manifest.status !== "running") {
+      return run.manifest.status === "completed" ? 100 : 0;
+    }
+
+    const runStartedAt = run.manifest.startedAt ?? run.manifest.createdAt;
+    const startedAtMs = Date.parse(runStartedAt);
+    const elapsedMs = Math.max(0, now - startedAtMs);
+    const totalBudgetMs = Math.max(
+      PERSONA_TEST_BUDGET_MS,
+      run.personaRuns.length * PERSONA_TEST_BUDGET_MS,
+    );
+    const rawProgress = (elapsedMs / totalBudgetMs) * 100;
+
+    return Math.max(8, Math.min(94, Math.round(rawProgress)));
+  }, [
+    now,
+    run.manifest.createdAt,
+    run.manifest.startedAt,
+    run.manifest.status,
+    run.personaRuns.length,
+  ]);
+
   return (
     <>
       <div className={styles.topBar}>
         <Link href="/" className={styles.backLink}>
           Back to dashboard
         </Link>
-        <span className={styles.status}>{statusCopy}</span>
+        {run.manifest.status === "running" ? (
+          <div
+            className={styles.progressStatus}
+            aria-label={`Run progress ${fakeProgress}%`}
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={fakeProgress}
+          >
+            <span className={styles.progressLabel}>Progress</span>
+            <div className={styles.progressTrack}>
+              <div
+                className={styles.progressFill}
+                style={{ width: `${fakeProgress}%` }}
+              />
+            </div>
+            <span className={styles.progressValue}>{fakeProgress}%</span>
+          </div>
+        ) : (
+          <span className={styles.status}>{statusCopy}</span>
+        )}
       </div>
 
       <section className={styles.hero}>
         <p className={styles.kicker}>Codex Community Hackathon - Vienna</p>
-        <h1>Run Overview</h1>
-        <p className={styles.url}>{run.manifest.url}</p>
+        <h1>{`UX Testing (${run.manifest.url})`}</h1>
         <p className={styles.copy}>
-          This page polls the local run record every two seconds. Pi uses the
-          SDK, calls custom browser tools backed by <code>agent-browser</code>,
-          and writes actions, observations, and final reports into the run
-          folder on disk.
+          Six personas test the same website with the same {budgetSeconds}
+          -second time budget. While the run is active, each panel shows that
+          persona&apos;s latest captured screen. When the run finishes, each panel
+          switches to the final markdown summary.
         </p>
       </section>
 
       <section className={styles.metaGrid}>
         <article className={styles.metaCard}>
-          <span>Created</span>
+          <span>Website</span>
+          <strong>{run.manifest.url}</strong>
+        </article>
+        <article className={styles.metaCard}>
+          <span>Per Persona</span>
+          <strong>{budgetSeconds} seconds max</strong>
+        </article>
+        <article className={styles.metaCard}>
+          <span>Started</span>
           <strong>{formatTimestamp(run.manifest.createdAt)}</strong>
-        </article>
-        <article className={styles.metaCard}>
-          <span>Execution</span>
-          <strong>Sequential persona runs</strong>
-        </article>
-        <article className={styles.metaCard}>
-          <span>Stored In</span>
-          <strong>data/runs/{run.manifest.id}</strong>
         </article>
       </section>
 
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
-          <h2>Persona Runs</h2>
-          <p>Status, observations, actions, and final markdown update live.</p>
+          <h2>Live Tester Panels</h2>
+          <p>
+            {showSummaries
+              ? "Testing finished. Each panel now shows the persona's final markdown findings."
+              : "The page refreshes every two seconds while screenshots and actions stream in."}
+          </p>
         </div>
         <div className={styles.personaGrid}>
           {run.personaRuns.map((personaRun) => (
             <article key={personaRun.personaId} className={styles.personaCard}>
-              <div className={styles.cardTop}>
-                <h3>{personaRun.personaName}</h3>
-                <span className={styles.queueBadge}>{personaRun.status}</span>
-              </div>
-              <p className={styles.summary}>{personaRun.summary}</p>
-
-              <div className={styles.subsection}>
-                <h4>Latest observations</h4>
-                <ul className={styles.observations}>
-                  {personaRun.observations.map((observation, index) => (
-                    <li key={`${personaRun.personaId}-observation-${index}`}>
-                      {observation}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className={styles.subsection}>
-                <h4>Recent actions</h4>
-                <ul className={styles.observations}>
-                  {personaRun.actions.length === 0 ? (
-                    <li>No browser actions yet.</li>
-                  ) : (
-                    personaRun.actions.map((action, index) => (
-                      <li
-                        key={`${personaRun.personaId}-action-${index}-${action.at}`}
-                      >
-                        {action.tool}: {action.input} ({action.outcome})
-                      </li>
-                    ))
-                  )}
-                </ul>
-              </div>
-
-              {personaRun.finalReport ? (
-                <div className={styles.reportBlock}>
-                  <h4>Final report</h4>
-                  <pre className={styles.reportText}>{personaRun.finalReport}</pre>
+              <div className={styles.panelHeader}>
+                <div className={styles.avatarWrap}>
+                  <Image
+                    src={personaRun.personaAvatar}
+                    alt={personaRun.personaName}
+                    width={52}
+                    height={52}
+                    className={styles.avatar}
+                  />
                 </div>
-              ) : null}
+                <div className={styles.panelMeta}>
+                  <h3>{personaRun.personaName}</h3>
+                  <span className={styles.queueBadge}>{personaRun.status}</span>
+                </div>
+              </div>
+              {showSummaries ? (
+                <div className={styles.reportBlock}>
+                  <RenderedMarkdown
+                    markdown={
+                      personaRun.finalReport ??
+                      `# ${personaRun.personaName}\n\nNo final report was captured.`
+                    }
+                  />
+                </div>
+              ) : (
+                <>
+                  <div className={styles.screenFrame}>
+                    {personaRun.latestScreenshotFileName ? (
+                      <Image
+                        src={`/api/runs/${run.manifest.id}/screenshots/${personaRun.latestScreenshotFileName}?v=${personaRun.latestScreenshotTakenAt ?? personaRun.updatedAt ?? ""}`}
+                        alt={`${personaRun.personaName} live browser screenshot`}
+                        fill
+                        sizes="(max-width: 680px) 100vw, (max-width: 900px) 50vw, 33vw"
+                        className={styles.screenImage}
+                        unoptimized
+                      />
+                    ) : (
+                      <div className={styles.screenPlaceholder}>
+                        <span className={styles.placeholderLabel}>
+                          {personaRun.status === "queued"
+                            ? "Waiting for turn"
+                            : "No screenshot yet"}
+                        </span>
+                        <p>{personaRun.summary}</p>
+                      </div>
+                    )}
+                  </div>
 
-              {personaRun.error ? (
-                <div className={styles.errorBox}>{personaRun.error}</div>
-              ) : null}
+                  <div className={styles.subsection}>
+                    <h4>Live terminal</h4>
+                    <div
+                      ref={(node) => {
+                        terminalRefs.current[personaRun.personaId] = node;
+                      }}
+                      className={styles.terminal}
+                    >
+                      {buildTerminalLines(personaRun).map((line, index) => (
+                        <div
+                          key={`${personaRun.personaId}-terminal-${index}-${line.label}`}
+                          className={styles.terminalLine}
+                          data-tone={line.tone}
+                        >
+                          <span className={styles.terminalTime}>{line.time}</span>
+                          <span className={styles.terminalPrompt}>{line.prompt}</span>
+                          <span className={styles.terminalText}>{line.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {personaRun.error ? <div className={styles.errorBox}>{personaRun.error}</div> : null}
             </article>
           ))}
         </div>
       </section>
     </>
+  );
+}
+
+type TerminalLine = {
+  label: string;
+  prompt: "$" | ">" | "*";
+  time: string;
+  tone: "neutral" | "success" | "error";
+};
+
+function buildTerminalLines(personaRun: PersonaRunRecord): TerminalLine[] {
+  const lines: TerminalLine[] = [];
+
+  lines.push({
+    time: formatTerminalTime(personaRun.startedAt ?? personaRun.updatedAt),
+    prompt: "$",
+    label: `persona booted (${personaRun.status})`,
+    tone: "neutral",
+  });
+
+  lines.push({
+    time: formatTerminalTime(personaRun.updatedAt),
+    prompt: ">",
+    label: personaRun.summary,
+    tone: personaRun.status === "failed" ? "error" : "neutral",
+  });
+
+  for (const action of [...personaRun.actions].reverse()) {
+    lines.push({
+      time: formatTerminalTime(action.at),
+      prompt: "$",
+      label: `${action.tool} ${summarizeActionInput(action.input)}`,
+      tone: action.outcome === "error" ? "error" : "success",
+    });
+  }
+
+  for (const observation of [...personaRun.observations.slice(0, 4)].reverse()) {
+    lines.push({
+      time: formatTerminalTime(personaRun.updatedAt),
+      prompt: "*",
+      label: summarizeObservation(observation),
+      tone: "neutral",
+    });
+  }
+
+  if (personaRun.error) {
+    lines.push({
+      time: formatTerminalTime(personaRun.updatedAt),
+      prompt: ">",
+      label: personaRun.error,
+      tone: "error",
+    });
+  }
+
+  return lines;
+}
+
+function summarizeActionInput(input: string) {
+  const compact = input
+    .replace(/\/Users\/[^ ]+/g, "[file]")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (compact.length <= 56) {
+    return compact;
+  }
+
+  return `${compact.slice(0, 53)}...`;
+}
+
+function summarizeObservation(observation: string) {
+  const firstLine = observation.split("\n")[0]?.trim() ?? observation.trim();
+
+  if (firstLine.length <= 68) {
+    return firstLine;
+  }
+
+  return `${firstLine.slice(0, 65)}...`;
+}
+
+function formatTerminalTime(timestamp?: string) {
+  if (!timestamp) {
+    return "--:--:--";
+  }
+
+  return timestamp.slice(11, 19);
+}
+
+function RenderedMarkdown({ markdown }: { markdown: string }) {
+  const blocks = markdown.split(/\n{2,}/).map((block) => block.trim()).filter(Boolean);
+
+  return (
+    <div className={styles.markdown}>
+      {blocks.map((block, index) => {
+        if (block.startsWith("# ")) {
+          return (
+            <h4 key={`${index}-${block}`} className={styles.markdownTitle}>
+              {block.slice(2)}
+            </h4>
+          );
+        }
+
+        if (block.startsWith("## ")) {
+          return (
+            <h5 key={`${index}-${block}`} className={styles.markdownHeading}>
+              {block.slice(3)}
+            </h5>
+          );
+        }
+
+        if (block.split("\n").every((line) => line.startsWith("- "))) {
+          return (
+            <ul key={`${index}-${block}`} className={styles.markdownList}>
+              {block.split("\n").map((line) => (
+                <li key={line}>{renderInlineMarkdown(line.slice(2))}</li>
+              ))}
+            </ul>
+          );
+        }
+
+        return (
+          <p key={`${index}-${block}`} className={styles.markdownParagraph}>
+            {renderInlineMarkdown(block)}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
+function renderInlineMarkdown(text: string) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean);
+
+  return parts.map((part, index) =>
+    part.startsWith("**") && part.endsWith("**") ? (
+      <strong key={`${part}-${index}`}>{part.slice(2, -2)}</strong>
+    ) : (
+      <span key={`${part}-${index}`}>{part}</span>
+    ),
   );
 }

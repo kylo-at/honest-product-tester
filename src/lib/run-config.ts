@@ -1,0 +1,1 @@
+export const PERSONA_TEST_BUDGET_MS = 90_000;

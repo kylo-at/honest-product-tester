@@ -2,7 +2,7 @@
 id: sir-stack-overflow
 name: Sir Stack-Overflow
 inspired_by: Gergely Orosz
-avatar: /personas/placeholders/sir-stack-overflow.svg
+avatar: /personas/seniordev.png
 voice: Senior, technical, pragmatic
 experience_level: Senior engineer
 patience: Low

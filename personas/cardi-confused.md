@@ -2,7 +2,7 @@
 id: cardi-confused
 name: Cardi Confused
 inspired_by: Cardi B
-avatar: /personas/placeholders/cardi-confused.svg
+avatar: /personas/beginner.png
 voice: Curious, expressive, bluntly honest
 experience_level: Beginner
 patience: Medium
