@@ -1,22 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Honest Product Tester
+
+Hackathon project for OpenAI Codex Vienna: a persona-driven website tester that browses a public product site live and produces separate reports from different personalities.
+
+## Current Direction
+
+- `Next.js + TypeScript`
+- `agent-browser` for live browsing
+- Pi SDK for persona reasoning and next-action decisions
+- editable Markdown personas in [`personas/`](/Users/benjaminthorstensen/HomeBase/Projects/honest-product-tester/personas)
+- filesystem persistence in [`data/runs/`](/Users/benjaminthorstensen/HomeBase/Projects/honest-product-tester/data/runs)
+
+## MVP Behavior
+
+- user submits a public URL
+- personas run one after the other
+- each persona browses differently according to its own prompt
+- each persona gets its own final report
+- dashboard shows persona cards, progress, and evidence
+
+## Planning
+
+The implementation plan lives in [`PLAN.md`](/Users/benjaminthorstensen/HomeBase/Projects/honest-product-tester/PLAN.md).
 
 ## Getting Started
 
-First, run the development server:
+Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Next Steps
+
+1. Add the run orchestration route and persistence helpers.
+2. Integrate `agent-browser`.
+3. Integrate Pi SDK session management and action schema.
+4. Save screenshots, action history, and final reports per persona.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Dark Muckerberg placeholder avatar">
+  <rect width="240" height="240" rx="36" fill="#11212d"/>
+  <circle cx="120" cy="92" r="42" fill="#ccd9e2"/>
+  <path d="M58 191c13-34 40-51 62-51s49 17 62 51" fill="#3d5a6c"/>
+  <path d="M88 91h64" stroke="#11212d" stroke-width="8" stroke-linecap="round"/>
+  <path d="M90 70c10-11 24-16 30-16s20 5 30 16" fill="none" stroke="#3d5a6c" stroke-width="8" stroke-linecap="round"/>
+</svg>

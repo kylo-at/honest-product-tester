@@ -1,0 +1,224 @@
+.page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(188, 155, 98, 0.22), transparent 30%),
+    linear-gradient(180deg, #f4efe4 0%, #efe6d2 100%);
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 24px 64px;
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.backLink {
+  color: #6d5630;
+  font-weight: 700;
+}
+
+.status {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #e2d5bf;
+  color: #453626;
+  font-size: 0.9rem;
+  text-transform: capitalize;
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 28px;
+  border-radius: 28px;
+  background: rgba(255, 251, 243, 0.92);
+  border: 1px solid rgba(22, 17, 15, 0.12);
+}
+
+.kicker {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #745e37;
+}
+
+.hero h1 {
+  font-size: clamp(2rem, 4vw, 3.3rem);
+  letter-spacing: -0.05em;
+}
+
+.url {
+  font-size: 1.1rem;
+  color: #332b25;
+  word-break: break-word;
+}
+
+.copy {
+  max-width: 780px;
+  line-height: 1.7;
+  color: #4c4339;
+}
+
+.copy code {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(22, 17, 15, 0.08);
+}
+
+.metaGrid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.metaCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px;
+  border-radius: 22px;
+  background: rgba(255, 251, 243, 0.84);
+  border: 1px solid rgba(22, 17, 15, 0.1);
+}
+
+.metaCard span {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #745e37;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sectionHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sectionHeader h2 {
+  font-size: 1.7rem;
+  letter-spacing: -0.04em;
+}
+
+.sectionHeader p {
+  color: #4c4339;
+}
+
+.subsection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.subsection h4 {
+  font-size: 0.88rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9ab3a0;
+}
+
+.personaGrid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.personaCard {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 24px;
+  background: #163127;
+  color: #edf4ef;
+}
+
+.cardTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.cardTop h3 {
+  font-size: 1.15rem;
+  letter-spacing: -0.03em;
+}
+
+.queueBadge {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  text-transform: capitalize;
+  font-size: 0.86rem;
+}
+
+.summary {
+  color: #cbd7ce;
+  line-height: 1.6;
+}
+
+.observations {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 18px;
+  color: #dce7df;
+  line-height: 1.5;
+}
+
+.reportBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.reportBlock h4 {
+  font-size: 0.88rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9ab3a0;
+}
+
+.reportText {
+  white-space: pre-wrap;
+  word-break: break-word;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 14px;
+  color: #eff4f0;
+  font: inherit;
+  line-height: 1.6;
+}
+
+.errorBox {
+  border-radius: 16px;
+  background: rgba(217, 79, 54, 0.18);
+  padding: 14px;
+  color: #ffd6ce;
+  line-height: 1.6;
+}
+
+@media (max-width: 900px) {
+  .metaGrid,
+  .personaGrid {
+    grid-template-columns: 1fr;
+  }
+}
