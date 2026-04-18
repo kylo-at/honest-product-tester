@@ -12,11 +12,14 @@ export default async function Home() {
         <section className={styles.hero}>
           <p className={styles.eyebrow}>Codex Community Hackathon - Vienna</p>
           <h1 className={styles.title}>
-            Catch your AI <span className={styles.titleAccent}>UX Slop</span>
+            <span className={styles.titleLine}>Real Feedback</span>
+            <span className={styles.titleLine}>
+              From <span className={styles.titleAccent}>Fake People</span>
+            </span>
           </h1>
           <p className={styles.lead}>
-            Before it reaches your customer. AI personas test your site and turn
-            first impressions into actionable feedback.
+            Catch your AI Slop Before it reaches your customer. AI personas test
+            your site and turn first impressions into actionable feedback.
           </p>
         </section>
 
@@ -35,7 +38,7 @@ export default async function Home() {
                 required
               />
               <button className={styles.submitButton} type="submit">
-                UX Test
+                TEST
               </button>
             </div>
           </form>
