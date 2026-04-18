@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Honest Product Tester",
+  title: "Catch your AI UX Slop",
   description: "Persona-driven website critique powered by Pi and agent-browser.",
 };
 
