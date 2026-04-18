@@ -2,6 +2,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 
 import { comparePersonaIds, Persona } from "@/lib/personas";
+import type { PersonaReportInsight } from "@/lib/report-insights";
 
 type OrchestrationMode = "sequential" | "parallel";
 
@@ -43,6 +44,7 @@ export type PersonaRunRecord = {
   actions: PersonaAction[];
   latestScreenshotFileName?: string;
   latestScreenshotTakenAt?: string;
+  structuredSummary?: PersonaReportInsight[];
   finalReport?: string;
   error?: string;
   startedAt?: string;

@@ -1,12 +1,19 @@
 "use client";
 
+import {
+  AlertCircle,
+  ChevronDown,
+  ChevronUp,
+  CircleDashed,
+  Clock3,
+  CircleCheckBig,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { PERSONA_TEST_BUDGET_MS } from "@/lib/run-config";
+import { REPORT_INSIGHT_DEFINITIONS } from "@/lib/report-insights";
 import type { PersonaRunRecord, RunManifest } from "@/lib/runs";
-import { formatTimestamp } from "@/lib/time";
 import styles from "./page.module.css";
 
 type RunPayload = {
@@ -17,6 +24,13 @@ type RunPayload = {
 type RunDetailsProps = {
   initialRun: RunPayload;
 };
+
+const statusIcons = {
+  queued: Clock3,
+  running: CircleDashed,
+  completed: CircleCheckBig,
+  failed: AlertCircle,
+} as const;
 
 export function RunDetails({ initialRun }: RunDetailsProps) {
   const [run, setRun] = useState(initialRun);
@@ -100,7 +114,6 @@ export function RunDetails({ initialRun }: RunDetailsProps) {
 
   const showSummaries =
     run.manifest.status === "completed" || run.manifest.status === "failed";
-  const budgetSeconds = Math.round(PERSONA_TEST_BUDGET_MS / 1000);
   const fakeProgress = useMemo(() => {
     if (run.manifest.status !== "running") {
       return run.manifest.status === "completed" ? 100 : 0;
@@ -132,9 +145,6 @@ export function RunDetails({ initialRun }: RunDetailsProps) {
           </Link>
           <div className={styles.runMeta}>
             <span className={styles.runUrl}>{`UX Testing ${run.manifest.url}`}</span>
-            <span className={styles.runFacts}>
-              {budgetSeconds}s per persona • {formatTimestamp(run.manifest.createdAt)}
-            </span>
           </div>
         </div>
         <div className={styles.topBarRight}>
@@ -165,7 +175,11 @@ export function RunDetails({ initialRun }: RunDetailsProps) {
       <section className={styles.section}>
         <div className={styles.personaGrid}>
           {run.personaRuns.map((personaRun) => (
-            <article key={personaRun.personaId} className={styles.personaCard}>
+            <article
+              key={personaRun.personaId}
+              className={styles.personaCard}
+              data-status={personaRun.status}
+            >
               <div className={styles.panelScroll}>
                 <div className={styles.panelHeader}>
                   <div className={styles.avatarWrap}>
@@ -179,19 +193,12 @@ export function RunDetails({ initialRun }: RunDetailsProps) {
                   </div>
                   <div className={styles.panelMeta}>
                     <h3>{personaRun.personaName}</h3>
-                    <span className={styles.queueBadge}>{personaRun.status}</span>
+                    <StatusBadge status={personaRun.status} />
                   </div>
                 </div>
                 <div className={styles.panelBody}>
                   {showSummaries ? (
-                    <div className={styles.reportBlock}>
-                      <RenderedMarkdown
-                        markdown={
-                          personaRun.finalReport ??
-                          `# ${personaRun.personaName}\n\nNo final report was captured.`
-                        }
-                      />
-                    </div>
+                    <StructuredSummary personaRun={personaRun} />
                   ) : (
                     <>
                       <div className={styles.screenFrame}>
@@ -250,6 +257,16 @@ export function RunDetails({ initialRun }: RunDetailsProps) {
         </div>
       </section>
     </>
+  );
+}
+
+function StatusBadge({ status }: { status: PersonaRunRecord["status"] }) {
+  const StatusIcon = statusIcons[status];
+
+  return (
+    <span className={styles.queueBadge} aria-label={status} title={status}>
+      <StatusIcon size={18} strokeWidth={2.2} />
+    </span>
   );
 }
 
@@ -338,56 +355,62 @@ function formatTerminalTime(timestamp?: string) {
   return timestamp.slice(11, 19);
 }
 
-function RenderedMarkdown({ markdown }: { markdown: string }) {
-  const blocks = markdown.split(/\n{2,}/).map((block) => block.trim()).filter(Boolean);
+function StructuredSummary({ personaRun }: { personaRun: PersonaRunRecord }) {
+  const [showAllInsights, setShowAllInsights] = useState(false);
+  const ExpandIcon = showAllInsights ? ChevronUp : ChevronDown;
+
+  if (!personaRun.structuredSummary?.length) {
+    return (
+      <div className={styles.reportBlock}>
+        <p className={styles.emptySummary}>
+          No structured summary was captured for this persona.
+        </p>
+      </div>
+    );
+  }
+
+  const visibleInsightIds = showAllInsights
+    ? REPORT_INSIGHT_DEFINITIONS.map((definition) => definition.id)
+    : ["unexpectedElements", "magicWandFix"];
+  const visibleInsights = REPORT_INSIGHT_DEFINITIONS.filter((definition) =>
+    visibleInsightIds.includes(definition.id),
+  );
 
   return (
-    <div className={styles.markdown}>
-      {blocks.map((block, index) => {
-        if (block.startsWith("# ")) {
-          return (
-            <h4 key={`${index}-${block}`} className={styles.markdownTitle}>
-              {block.slice(2)}
-            </h4>
-          );
-        }
+    <div className={styles.reportBlock}>
+      <div className={styles.insightList}>
+        {visibleInsights.map((definition) => {
+          const answer =
+            personaRun.structuredSummary?.find((item) => item.id === definition.id)
+              ?.answer ?? "Missing answer.";
 
-        if (block.startsWith("## ")) {
           return (
-            <h5 key={`${index}-${block}`} className={styles.markdownHeading}>
-              {block.slice(3)}
-            </h5>
+            <section key={definition.id} className={styles.insightCard}>
+              <div className={styles.insightHeader}>
+                <div className={styles.insightTitleWrap}>
+                  <div className={styles.tooltipWrap}>
+                    <h4 className={styles.insightTitle} tabIndex={0}>
+                      {definition.title}
+                    </h4>
+                    <span className={styles.tooltip}>{definition.info}</span>
+                  </div>
+                </div>
+              </div>
+              <p className={styles.insightAnswer}>{answer}</p>
+            </section>
           );
-        }
-
-        if (block.split("\n").every((line) => line.startsWith("- "))) {
-          return (
-            <ul key={`${index}-${block}`} className={styles.markdownList}>
-              {block.split("\n").map((line) => (
-                <li key={line}>{renderInlineMarkdown(line.slice(2))}</li>
-              ))}
-            </ul>
-          );
-        }
-
-        return (
-          <p key={`${index}-${block}`} className={styles.markdownParagraph}>
-            {renderInlineMarkdown(block)}
-          </p>
-        );
-      })}
+        })}
+      </div>
+      <button
+        type="button"
+        className={styles.expandInsightsButton}
+        onClick={() => {
+          setShowAllInsights((current) => !current);
+        }}
+      >
+        <ExpandIcon size={15} strokeWidth={2.6} />
+        {showAllInsights ? "Show fewer" : "Show all 4"}
+      </button>
     </div>
-  );
-}
-
-function renderInlineMarkdown(text: string) {
-  const parts = text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean);
-
-  return parts.map((part, index) =>
-    part.startsWith("**") && part.endsWith("**") ? (
-      <strong key={`${part}-${index}`}>{part.slice(2, -2)}</strong>
-    ) : (
-      <span key={`${part}-${index}`}>{part}</span>
-    ),
   );
 }

@@ -21,6 +21,10 @@ import {
   updateRunManifest,
   writePersonaReport,
 } from "@/lib/runs";
+import {
+  REPORT_INSIGHT_DEFINITIONS,
+  type PersonaReportInsight,
+} from "@/lib/report-insights";
 
 const execFileAsync = promisify(execFile);
 const AGENT_BROWSER_BIN = path.join(
@@ -105,7 +109,7 @@ async function runPersona(runId: string, url: string, persona: Persona) {
   await appendPersonaObservation(runId, persona.id, "Persona run started.");
 
   const screenshotDir = getScreenshotDir(runId);
-  let reportMarkdown = "";
+  let reportText = "";
 
   const tools = createBrowserTools({
     browserSession,
@@ -128,7 +132,7 @@ async function runPersona(runId: string, url: string, persona: Persona) {
       event.type === "message_update" &&
       event.assistantMessageEvent.type === "text_delta"
     ) {
-      reportMarkdown += event.assistantMessageEvent.delta;
+      reportText += event.assistantMessageEvent.delta;
     }
   });
 
@@ -146,20 +150,22 @@ async function runPersona(runId: string, url: string, persona: Persona) {
       }),
     ]);
 
-    const finalReport = reportMarkdown.trim() || fallbackReport(persona.name);
+    const structuredSummary = parseStructuredSummary(reportText);
+    const finalReport = buildSummaryMarkdown(persona.name, structuredSummary);
 
     await updatePersonaRecord(runId, persona.id, (current) => ({
       ...current,
       status: "completed",
       completedAt: new Date().toISOString(),
-      summary: "Finished browsing and wrote a persona report.",
+      summary: "Finished browsing and captured structured feedback.",
+      structuredSummary,
       finalReport,
     }));
     await writePersonaReport(runId, persona.id, finalReport);
     await appendPersonaObservation(
       runId,
       persona.id,
-      "Persona report written to disk.",
+      "Structured persona report written to disk.",
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown persona failure";
@@ -416,6 +422,10 @@ function createBrowserTools({
 }
 
 function buildPersonaPrompt(persona: Persona, url: string) {
+  const outputSchema = REPORT_INSIGHT_DEFINITIONS.map(
+    ({ id, question }) => `  "${id}": "${question}"`,
+  ).join("\n");
+
   return `
 ${persona.prompt}
 
@@ -430,34 +440,73 @@ Constraints:
 - No destructive actions, purchases, or final form submissions.
 - Use browser_snapshot whenever you need to decide what to click next.
 - Use browser_screenshot when something is notably good, bad, or confusing.
-- If a page is slow or broken, mention that.
+- If a page is slow or broken, mention that in the relevant answer.
 
-When you are done, return only Markdown in this exact structure:
+When you are done, return only valid JSON in this exact shape:
 
-# ${persona.name}
+{
+${outputSchema}
+}
 
-- one bullet with the strongest first impression
-- one bullet with the biggest friction or confusion, if any
-- one bullet with the clearest thing that worked well
-- one bullet with the most important improvement advice
-- optional fifth bullet only if there is another high-value finding
-
-Rules for the bullets:
-- Write 4 bullets by default, 5 only if truly useful.
-- Keep each bullet to 1 or 2 short sentences.
+Rules for the answers:
+- Each value must be a short answer in this persona's voice.
+- Aim for roughly 8 to 10 words per answer.
+- Do not repeat the question inside the answer.
 - Be concrete about what you clicked, what happened, and what this persona wanted but did not get.
-- Include real advice on what should change, not just criticism.
-- Skip filler, repetition, and generic praise.
+- Do not include markdown, commentary, code fences, or extra keys.
 `.trim();
 }
 
-function fallbackReport(personaName: string) {
-  return `# ${personaName}
+function parseStructuredSummary(rawText: string): PersonaReportInsight[] {
+  const candidate = rawText.trim();
 
-- First impression could not be captured because no usable report text was returned.
-- The run finished, but the persona summary was missing.
-- Main improvement: ensure the persona returns the required short bullet summary format.
-`;
+  if (!candidate) {
+    throw new Error("Persona returned no structured summary.");
+  }
+
+  const jsonText = extractJsonObject(candidate);
+  const parsed = JSON.parse(jsonText) as Record<string, unknown>;
+
+  return REPORT_INSIGHT_DEFINITIONS.map(({ id }) => {
+    const answer = parsed[id];
+
+    if (typeof answer !== "string" || !answer.trim()) {
+      throw new Error(`Persona summary is missing "${id}".`);
+    }
+
+    return {
+      id,
+      answer: answer.trim(),
+    };
+  });
+}
+
+function extractJsonObject(rawText: string) {
+  const firstBrace = rawText.indexOf("{");
+  const lastBrace = rawText.lastIndexOf("}");
+
+  if (firstBrace === -1 || lastBrace === -1 || lastBrace < firstBrace) {
+    throw new Error("Persona output was not valid JSON.");
+  }
+
+  return rawText.slice(firstBrace, lastBrace + 1);
+}
+
+function buildSummaryMarkdown(
+  personaName: string,
+  structuredSummary: PersonaReportInsight[],
+) {
+  const bullets = REPORT_INSIGHT_DEFINITIONS.map(({ id, title }) => {
+    const insight = structuredSummary.find((item) => item.id === id);
+
+    if (!insight) {
+      throw new Error(`Missing structured insight for "${id}".`);
+    }
+
+    return `- **${title}:** ${insight.answer}`;
+  }).join("\n");
+
+  return `# ${personaName}\n\n${bullets}\n`;
 }
 
 function getBrowserSessionName(runId: string, personaId: string) {
