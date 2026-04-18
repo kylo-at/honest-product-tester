@@ -1,57 +1,36 @@
-# Honest Product Tester
+# Real Feedback From Fake People
+> **Catch your AI slop before your customers do.** **Real Feedback** deploys six opinionated, autonomous AI personas to live-test your website. Instead of static analysis, we use real browser automation to turn first impressions into actionable heatmaps and critiques.
 
-Hackathon project for OpenAI Codex Vienna: a persona-driven website tester that browses a public product site live and produces separate reports from different personalities.
+## ✨ The "Aha!" Moment
+* **Parallel Agent Execution:** This isn't a mock. We spin up **six concurrent Pi sessions** that browse your site in parallel, each with their own browser instance and unique worldview.
+* **Autonomous Tool Use:** We don't hardcode paths. Personas like *Dark Muckerberg* or *Chef Lamb Sauce* use a custom `agent-browser` toolset to click, type, and scroll based on their own goals.
+* **Live Voyeurism:** Watch the "Terminal of Truth" in real-time. The UI streams the raw thoughts, actions, and screenshots of the agents as they navigate your DOM.
 
-## Current Direction
+## 🎭 The Testers
+Our agents are loaded from Markdown-based persona definitions:
+* **Dark Muckerberg:** Looking for data moats and optimization.
+* **Cardi Confused:** If it’s not intuitive, she’s out.
+* **Chef Lamb Sauce:** "It’s RAW!"—critiquing UI polish and performance.
+* **Tom Thanks:** The nicest guy in tech, looking for the silver lining.
+* **Sir Stack-Overflow:** Testing your technical edge cases.
+* **Multitasking Millie:** Can your site hold attention?
 
-- `Next.js + TypeScript`
-- `agent-browser` for live browsing
-- Pi SDK for persona reasoning and next-action decisions
-- editable Markdown personas in [`personas/`](/Users/benjaminthorstensen/HomeBase/Projects/honest-product-tester/personas)
-- filesystem persistence in [`data/runs/`](/Users/benjaminthorstensen/HomeBase/Projects/honest-product-tester/data/runs)
+## 🧠 How it Works (The Flow)
+1.  **Ingestion:** User submits a URL via the **Next.js 16** frontend.
+2.  **Persona Loading:** Profiles are pulled from **Markdown frontmatter**, defining the durable instruction set for the agents.
+3.  **The Agent Loop:** Each persona initializes a **Pi SDK session** connected to a custom browser control layer.
+4.  **Autonomous Browsing:** Agents use `agent-browser` tools (`browser_click`, `browser_type`, `browser_scroll`) to interact with the site, capturing raw observations and screenshots stored in a filesystem-backed run (`data/runs/`).
+5.  **Synthesis:** Agents distill the chaos into a **strict 4-question JSON summary** and a final Markdown report for the dashboard.
 
-## MVP Behavior
+## 🛠️ The Tech Stack
+* **Frontend:** `Next.js 16.2` • `React 19.2` • `Lucide React`
+* **Agent Logic:** `Pi SDK` (Reasoning) • `agent-browser` (Execution)
+* **Data Layer:** Filesystem-backed persistence (JSON/MD/Screenshots)
+* **Parsing:** `gray-matter` for persona definitions
 
-- user submits a public URL
-- personas run in parallel
-- each persona browses differently according to its own prompt
-- each persona gets its own final report
-- dashboard shows persona cards, progress, and evidence
-
-## Planning
-
-The implementation plan lives in [`PLAN.md`](/Users/benjaminthorstensen/HomeBase/Projects/honest-product-tester/PLAN.md).
-
-## Getting Started
-
-Run the development server:
+## 🏁 Quick Start
+* Make sure you have PI Agent installed and are properly logged in with one of your Accounts, it will use it.
 
 ```bash
+npm install
 npm run dev
-```
-
-Then open [http://localhost:3000](http://localhost:3000).
-
-## Next Steps
-
-1. Add the run orchestration route and persistence helpers.
-2. Integrate `agent-browser`.
-3. Integrate Pi SDK session management and action schema.
-4. Save screenshots, action history, and final reports per persona.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
