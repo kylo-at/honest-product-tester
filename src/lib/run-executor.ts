@@ -4,8 +4,10 @@ import path from "node:path";
 
 import { Type } from "@sinclair/typebox";
 import {
+  AuthStorage,
   createAgentSession,
   defineTool,
+  ModelRegistry,
   SessionManager,
   type AgentSessionEvent,
 } from "@mariozechner/pi-coding-agent";
@@ -32,6 +34,9 @@ const AGENT_BROWSER_BIN = path.join(
   ".bin",
   "agent-browser",
 );
+const PERSONA_MODEL_PROVIDER = "openai";
+const PERSONA_MODEL_ID = "gpt-5.5";
+const PERSONA_MODEL_FALLBACK_ID = "gpt-5.4";
 const activeRuns = globalThis.__honestProductTesterRuns ?? new Map<string, Promise<void>>();
 
 globalThis.__honestProductTesterRuns = activeRuns;
@@ -109,6 +114,7 @@ async function runPersona(runId: string, url: string, persona: Persona) {
 
   const screenshotDir = getScreenshotDir(runId);
   let reportText = "";
+  let providerError: string | undefined;
 
   const tools = createBrowserTools({
     browserSession,
@@ -116,9 +122,15 @@ async function runPersona(runId: string, url: string, persona: Persona) {
     runId,
     screenshotDir,
   });
+  const authStorage = AuthStorage.create();
+  const modelRegistry = ModelRegistry.create(authStorage);
+  const personaModel = resolvePersonaModel(modelRegistry);
 
   const { session } = await createAgentSession({
+    authStorage,
     customTools: tools,
+    model: personaModel,
+    modelRegistry,
     tools: [],
     thinkingLevel: "low",
     sessionManager: SessionManager.inMemory(),
@@ -126,6 +138,11 @@ async function runPersona(runId: string, url: string, persona: Persona) {
 
   const unsubscribe = session.subscribe((event) => {
     void handleSessionEvent(runId, persona.id, event);
+    const eventProviderError = getProviderError(event);
+
+    if (eventProviderError) {
+      providerError = eventProviderError;
+    }
 
     if (
       event.type === "message_update" &&
@@ -137,6 +154,10 @@ async function runPersona(runId: string, url: string, persona: Persona) {
 
   try {
     await session.prompt(buildPersonaPrompt(persona, url));
+
+    if (providerError) {
+      throw new Error(providerError);
+    }
 
     const structuredSummary = parseStructuredSummary(reportText);
     const finalReport = buildSummaryMarkdown(persona.name, structuredSummary);
@@ -467,6 +488,45 @@ function parseStructuredSummary(rawText: string): PersonaReportInsight[] {
       answer: answer.trim(),
     };
   });
+}
+
+function resolvePersonaModel(modelRegistry: ModelRegistry) {
+  const configuredModel = modelRegistry.find(PERSONA_MODEL_PROVIDER, PERSONA_MODEL_ID);
+
+  if (configuredModel) {
+    return configuredModel;
+  }
+
+  const fallbackModel = modelRegistry.find(
+    PERSONA_MODEL_PROVIDER,
+    PERSONA_MODEL_FALLBACK_ID,
+  );
+
+  if (!fallbackModel) {
+    throw new Error(
+      `Pi model ${PERSONA_MODEL_PROVIDER}/${PERSONA_MODEL_ID} is not available, and fallback ${PERSONA_MODEL_FALLBACK_ID} was not found.`,
+    );
+  }
+
+  return {
+    ...fallbackModel,
+    id: PERSONA_MODEL_ID,
+    name: "GPT-5.5",
+  };
+}
+
+function getProviderError(event: AgentSessionEvent) {
+  if (event.type !== "turn_end") {
+    return undefined;
+  }
+
+  const message = event.message;
+
+  if ("errorMessage" in message && typeof message.errorMessage === "string") {
+    return message.errorMessage;
+  }
+
+  return undefined;
 }
 
 function extractJsonObject(rawText: string) {
